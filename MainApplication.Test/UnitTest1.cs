@@ -81,7 +81,7 @@ namespace MainApplication.Tests
             var repo = new RepositoryManager();
 
             // Act + Assert
-            Assert.Throws<InvalidDataException>(() => repo.Register("TestItemNO", "", 8068));
+            Assert.Throws<NotSupportedException>(() => repo.Register("TestItemNO", "", 8068));
             Assert.Throws<InvalidDataException>(() => repo.Register("TestItemJSON", "", 1));
             Assert.Throws<InvalidDataException>(() => repo.Register("TestItemXML", "", 2));
         }

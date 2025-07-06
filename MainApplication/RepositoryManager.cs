@@ -37,23 +37,10 @@ namespace MainApplication
 
         public void Register(string itemName, string itemContent, int itemType)
         {
-            switch (itemType)
-            {
-                case 1:
-                    if (!IsValidJson(itemContent))
-                    {
-                        throw new InvalidDataException("Item content is invalid for the specified type");
-                    }
-                    break;
-                case 2:
-                    if (!IsValidXml(itemContent))
-                    {
-                        throw new InvalidDataException("Item content is invalid for the specified type");
-                    }
-                    break;
-                default:
-                    throw new InvalidDataException("Item content is invalid for the specified type");
-            }
+            var validator = ItemValidatorFactory.GetValidator((ItemType)itemType);
+            if (!validator.IsValid(itemContent))
+                throw new InvalidDataException("Item content is invalid for the specified type");
+
             if (!items.TryAdd(itemName, new ItemString
             {
                 ItemName = itemName,
