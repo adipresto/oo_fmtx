@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,20 +11,16 @@ namespace MainApplication
 {
     public class RepositoryManager : IRepositoryManager
     {
-        private List<ItemString> items { get; set; }
+        private ConcurrentDictionary<string, ItemString> items { get; set; }
+        
         public RepositoryManager()
         {
-            items = new List<ItemString>();
+            items = new ConcurrentDictionary<string, ItemString>();
         }
 
         public void Deregister(string itemName)
         {
-            var item = items.Where(item => item.ItemName == itemName).FirstOrDefault();
-            if (item != null)
-            {
-                items.Remove(item);
-            }
-            else
+            if (!items.TryRemove(itemName, out _))
             {
                 throw new KeyNotFoundException($"{itemName} is not exist");
             }
@@ -31,45 +28,38 @@ namespace MainApplication
 
         public int GetType(string itemName)
         {
-            var item = items.Where(item => item.ItemName == itemName).FirstOrDefault();
-            if (item != null)
+            if (items.TryGetValue(itemName, out var item))
             {
                 return (int)item.ItemType;
             }
-            else
-            {
-                throw new KeyNotFoundException($"{itemName} is not exist");
-            }
+            throw new KeyNotFoundException($"{itemName} is not exist");
         }
 
         public void Register(string itemName, string itemContent, int itemType)
         {
-            if (!items.Any(item => item.ItemName == itemName)) 
+            switch (itemType)
             {
-                switch (itemType)
-                {
-                    case 1:
-                        if (!IsValidJson(itemContent))
-                        {
-                            throw new InvalidDataException("Item content is invalid for the specified type");
-                        }
-                        break;
-                    case 2:
-                        if (!IsValidXml(itemContent))
-                        {
-                            throw new InvalidDataException("Item content is invalid for the specified type");
-                        }
-                        break;
-                    default:
+                case 1:
+                    if (!IsValidJson(itemContent))
+                    {
                         throw new InvalidDataException("Item content is invalid for the specified type");
-                }
-                items.Add(new ItemString()
-                {
-                    ItemName = itemName,
-                    ItemContent = itemContent,
-                    ItemType = (ItemType)itemType,
-                });
-            } else
+                    }
+                    break;
+                case 2:
+                    if (!IsValidXml(itemContent))
+                    {
+                        throw new InvalidDataException("Item content is invalid for the specified type");
+                    }
+                    break;
+                default:
+                    throw new InvalidDataException("Item content is invalid for the specified type");
+            }
+            if (!items.TryAdd(itemName, new ItemString
+            {
+                ItemName = itemName,
+                ItemContent = itemContent,
+                ItemType = (ItemType)itemType
+            }))
             {
                 throw new InvalidOperationException("Item already exists");
             }
@@ -77,15 +67,11 @@ namespace MainApplication
 
         public string Retrieve(string itemName)
         {
-            var item = items.Where(item => item.ItemName == itemName).FirstOrDefault();
-            if (item != null)
+            if (items.TryGetValue(itemName, out var item))
             {
                 return item.ItemContent;
             }
-            else
-            {
-                throw new KeyNotFoundException($"{itemName} is not exist");
-            }
+            throw new KeyNotFoundException($"{itemName} is not exist");
         }
 
         private bool IsValidJson(string content)

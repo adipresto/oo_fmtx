@@ -3,6 +3,7 @@ using MainApplication;
 using System;
 using System.Text.Json;
 using System.Reflection;
+using System.Collections.Concurrent;
 
 namespace MainApplication.Tests
 {
@@ -15,10 +16,9 @@ namespace MainApplication.Tests
             var repo = new RepositoryManager();
 
             var itemsField = typeof(RepositoryManager).GetProperty("items", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var list = new System.Collections.Generic.List<ItemString>
-            {
-                new ItemString { ItemName = "TestItem", ItemType = ItemType.JSON }
-            };
+            var list = new ConcurrentDictionary<string, ItemString>();
+            list.TryAdd("TestItem", new ItemString { ItemName = "TestItem", ItemType = ItemType.JSON });
+
             itemsField.SetValue(repo, list);
 
             repo.Deregister("TestItem");
@@ -93,14 +93,14 @@ namespace MainApplication.Tests
 
             // Masukkan item awal via reflection
             var itemsField = typeof(RepositoryManager).GetProperty("items", BindingFlags.NonPublic | BindingFlags.Instance);
-            var initialList = new List<ItemString>
-            {
-                new ItemString { ItemName = "TestItem", ItemContent = "ini_itu", ItemType = ItemType.JSON }
-            };
+            var initialList = new ConcurrentDictionary<string, ItemString>();
+            var item = new ItemString { ItemName = "TestItem", ItemType = ItemType.JSON };
+            initialList.TryAdd("TestItem", item);
+
             itemsField.SetValue(repo, initialList);
 
             // Act + Assert
-            Assert.Throws<InvalidOperationException>(() => repo.Register("TestItem", "kan begini", 1));
+            Assert.Throws<InvalidOperationException>(() => repo.Register("TestItem", JsonSerializer.Serialize(item), 1));
         }
         [Fact]
         public void GetType_ReturnsCorrectItemType_WhenItemExists()
@@ -109,10 +109,9 @@ namespace MainApplication.Tests
             var repo = new RepositoryManager();
 
             var itemsField = typeof(RepositoryManager).GetProperty("items", BindingFlags.NonPublic | BindingFlags.Instance);
-            var list = new System.Collections.Generic.List<ItemString>
-            {
-                new ItemString { ItemName = "TestItem", ItemType = ItemType.JSON }
-            };
+            var list = new ConcurrentDictionary<string, ItemString>();
+            list.TryAdd("TestItem", new ItemString { ItemName = "TestItem", ItemType = ItemType.JSON });
+
             itemsField.SetValue(repo, list);
 
             // Act
