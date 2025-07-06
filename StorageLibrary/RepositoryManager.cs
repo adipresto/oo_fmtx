@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace MainApplication
+namespace StorageLibrary
 {
     public class RepositoryManager : IRepositoryManager
     {

@@ -17,11 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="Xunit" />
+    <ProjectReference Include="..\StorageLibrary\StorageLibrary.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MainApplication\MainApplication.csproj" />
+    <Using Include="Xunit" />
   </ItemGroup>
 
 </Project>
